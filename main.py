@@ -17,17 +17,28 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 openai = OpenAI(api_key=OPENAI_API_KEY)
 
 # ----- OpenAI -----
+conversation_history = [
+    {"role": "system", "content": "You are a helpful assistant. Give short, clear responses."}
+]
+
 async def get_chatgpt_response(prompt: str) -> str:
     try:
+        # Add user message
+        conversation_history.append({"role": "user", "content": prompt})
+
+        # Generate response
         response = openai.chat.completions.create(
             model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant. Give short, clear responses."},
-                {"role": "user", "content": prompt}
-            ],
+            messages=conversation_history,
             temperature=0.7
         )
-        return response.choices[0].message.content.strip()
+
+        assistant_reply = response.choices[0].message.content.strip()
+
+        # Save assistant reply
+        conversation_history.append({"role": "assistant", "content": assistant_reply})
+
+        return assistant_reply
     except Exception as e:
         print("OpenAI error:", e)
         return "Sorry, I had a problem generating a response."
