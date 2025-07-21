@@ -8,20 +8,25 @@ import ssl
 from pydub import AudioSegment
 from dotenv import load_dotenv
 import os
+from openai import AsyncOpenAI  # Added for ChatGPT integration
 
 # === Load environment variables from .env file ===
 load_dotenv()
 DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Added for ChatGPT
 
-# Dictionary to hold subscribers for each call session
+# === Initialize OpenAI client ===
+openai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+
+# Dictionary to hold subscribers and conversation history for each call session
 subscribers = {}
+conversation_history = {}  # Store conversation history per callSid
 
 # === Connect to Deepgram WebSocket API ===
 def deepgram_connect():
     extra_headers = {
         'Authorization': "Token {}".format(DEEPGRAM_API_KEY)
     }
-    # Open Deepgram WebSocket connection with multi-channel audio
     return websockets.connect('wss://api.deepgram.com/v1/listen?encoding=mulaw&sample_rate=8000&channels=2&multichannel=true', extra_headers=extra_headers)
 
 # === Handle Twilio WebSocket audio stream ===
@@ -38,31 +43,61 @@ async def twilio_handler(twilio_ws):
                 chunk = await audio_queue.get()
                 await deepgram_ws.send(chunk)
 
-        # === Receive transcription from Deepgram ===
+        # === Receive transcription from Deepgram and integrate ChatGPT ===
         async def deepgram_receiver(deepgram_ws):
             print('deepgram_receiver started')
             callsid = await callsid_queue.get()
             subscribers[callsid] = []
+            conversation_history[callsid] = []  # Initialize conversation history
             
-            # Stream transcription results from Deepgram
             async for message in deepgram_ws:
                 try:
                     response = json.loads(message)
                     transcript = response.get("channel", {}).get("alternatives", [{}])[0].get("transcript", "")
                     if transcript.strip():
-                        print(f"[{callsid}] {transcript}")
+                        print(f"[{callsid}] Transcript: {transcript}")
+                        
+                        # Add user transcript to conversation history
+                        conversation_history[callsid].append({"role": "user", "content": transcript})
+                        
+                        # Send transcript to ChatGPT
+                        chatgpt_response = await openai_client.chat.completions.create(
+                            model="gpt-4o",  # Use desired model (e.g., gpt-4o or gpt-3.5-turbo)
+                            messages=[
+                                {"role": "system", "content": "You are a helpful assistant responding to a phone call transcript. Provide concise, natural responses suitable for a voice conversation."},
+                                *conversation_history[callsid][-5:]  # Send last 5 messages for context
+                            ],
+                            max_tokens=100
+                        )
+                        chatgpt_text = chatgpt_response.choices[0].message.content
+                        print(f"[{callsid}] ChatGPT: {chatgpt_text}")
+                        
+                        # Add ChatGPT response to conversation history
+                        conversation_history[callsid].append({"role": "assistant", "content": chatgpt_text})
+                        
+                        # Send ChatGPT response back to Twilio as text (for TTS playback)
+                        twilio_message = {
+                            "event": "media",
+                            "streamSid": response.get("streamSid", ""),
+                            "media": {
+                                "payload": base64.b64encode(chatgpt_text.encode()).decode()  # Encode text for Twilio
+                            }
+                        }
+                        await twilio_ws.send(json.dumps(twilio_message))
+                        
+                        # Broadcast transcription to clients
+                        for client in subscribers[callsid]:
+                            client.put_nowait(message)
                 except Exception as e:
-                    print(f"Error decoding Deepgram message: {e}")
+                    print(f"Error processing message: {e}")
                 
-                # Broadcast message to any listening clients
-                for client in subscribers[callsid]:
-                    client.put_nowait(message)
-
             # Notify all clients when stream ends
             for client in subscribers[callsid]:
                 client.put_nowait('close')
 
+            # Clean up
             del subscribers[callsid]
+            del conversation_history[callsid]
 
         # === Receive and buffer audio from Twilio WebSocket ===
         async def twilio_receiver(twilio_ws):
@@ -93,12 +128,10 @@ async def twilio_handler(twilio_ws):
                         # Handle inbound (caller → system) audio
                         if media['track'] == 'inbound':
                             if inbound_chunks_started:
-                                # Fill in silence for dropped packets
                                 if latest_inbound_timestamp + 20 < int(media['timestamp']):
                                     bytes_to_fill = 8 * (int(media['timestamp']) - (latest_inbound_timestamp + 20))
                                     inbuffer.extend(b'\xff' * bytes_to_fill)
                             else:
-                                # First inbound packet
                                 inbound_chunks_started = True
                                 latest_inbound_timestamp = int(media['timestamp'])
                                 latest_outbound_timestamp = int(media['timestamp']) - 20
@@ -108,7 +141,7 @@ async def twilio_handler(twilio_ws):
 
                         # Handle outbound (system → caller) audio
                         elif media['track'] == 'outbound':
-                            outbound_chunked_started = True
+                            outbound_chunks_started = True
                             if latest_outbound_timestamp + 20 < int(media['timestamp']):
                                 bytes_to_fill = 8 * (int(media['timestamp']) - (latest_outbound_timestamp + 20))
                                 outbuffer.extend(b'\xff' * bytes_to_fill)
@@ -169,7 +202,6 @@ async def client_handler(client_ws):
             try:
                 await client_ws.send(message)
             except:
-                # Client disconnected
                 subscribers[callsid].remove(client_queue)
                 break
 
