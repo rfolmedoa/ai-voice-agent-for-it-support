@@ -75,6 +75,16 @@ async def deepgram_stt(streamsid, twilio_ws, audio_queue):
 
                 if transcript:
                     print("You:", transcript)
+                
+                if is_final and transcript.strip():
+                    user_input = transcript.strip().lower()
+                    if "goodbye" in user_input or "exit" in user_input:
+                        farewell = "Goodbye! Ending the call now."
+                        print("ChatGPT:", farewell)
+                        await send_tts_to_twilio(farewell, streamsid, twilio_ws)
+                        await asyncio.sleep(2)  # allow time for playback
+                        await twilio_ws.close()
+                        break
 
                 if is_final and transcript.strip():
                     response_text = await get_chatgpt_response(transcript.strip())
