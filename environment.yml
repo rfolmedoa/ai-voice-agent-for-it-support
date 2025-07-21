@@ -180,4 +180,3 @@ dependencies:
       - yarl
       - pydub
       - sounddevice
-      - pyaudio
