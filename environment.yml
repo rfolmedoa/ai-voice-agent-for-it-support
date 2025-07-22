@@ -180,3 +180,5 @@ dependencies:
       - yarl
       - pydub
       - sounddevice
+      - langchain_openai
+      - langgraph
