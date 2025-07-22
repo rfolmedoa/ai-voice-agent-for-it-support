@@ -61,48 +61,16 @@ async def shutdown_event():
 
 
 # ----- OpenAI -----
-# conversation_history = [
-#     {"role": "system", "content": "You are a helpful assistant. Give short, clear responses."}
-# ]
 
 async def get_chatgpt_response(prompt: str) -> str:
     try:
-        # Add user message
-        # conversation_history.append({"role": "user", "content": prompt})
-
-        # Generate response
 
         message = await runtime.send_message(TextMessage(content=prompt, source="user"), AgentId("assistant", "default"))
-
-        # Save assistant reply
-        # conversation_history.append({"role": "assistant", "content": assistant_reply})
 
         return message.content
     except Exception as e:
         print("OpenAI error:", e)
         return "Sorry, I had a problem generating a response."
-
-# async def get_chatgpt_response(prompt: str) -> str:
-#     try:
-#         # Add user message
-#         conversation_history.append({"role": "user", "content": prompt})
-
-#         # Generate response
-#         response = openai.chat.completions.create(
-#             model="gpt-4",
-#             messages=conversation_history,
-#             temperature=0.7
-#         )
-
-#         assistant_reply = response.choices[0].message.content.strip()
-
-#         # Save assistant reply
-#         conversation_history.append({"role": "assistant", "content": assistant_reply})
-
-#         return assistant_reply
-#     except Exception as e:
-#         print("OpenAI error:", e)
-#         return "Sorry, I had a problem generating a response."
 
 # ----- Deepgram TTS -----
 async def send_tts_to_twilio(text: str, streamsid: str, twilio_ws):
@@ -127,7 +95,7 @@ async def send_tts_to_twilio(text: str, streamsid: str, twilio_ws):
 
 # ----- Deepgram STT Handler -----
 async def deepgram_stt(streamsid, twilio_ws, audio_queue):
-    uri = "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=8000&model='nova-3"
+    uri = "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=8000&model=nova-3"
     headers = {"Authorization": f"Token {DEEPGRAM_API_KEY}"}
 
     async with websockets.connect(uri, extra_headers=headers) as dg_ws:
@@ -206,25 +174,5 @@ async def router(websocket, path):
         print("🌐 Incoming Twilio connection...")
         await twilio_handler(websocket)
 
-# async def main():
-#     print("🚀 WebSocket server listening on ws://localhost:5000/twilio")
-    # await startup_event()
-    # await websockets.serve(router, "0.0.0.0", 5000)
-    # asyncio.get_event_loop().run_until_complete(server)
-    # asyncio.get_event_loop().run_forever()
-    # await shutdown_event()
-    # run with uvicorn instead (see __main__ block)
-
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=5000, reload=True)
-
-
-# uvicorn.run("main:app", host="0.0.0.0", port=5000, reload=True)
-
-
-# - await websockets.serve(router, "0.0.0.0", 5000)
-# - asyncio.get_event_loop().run_forever()
-# run with uvicorn instead (see __main__ block)
- 
-
-#
