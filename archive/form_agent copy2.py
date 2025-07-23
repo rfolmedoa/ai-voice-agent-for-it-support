@@ -21,6 +21,23 @@ from flask import Flask
 
 import sqlite3
 
+def initialize_user_db():
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY,
+            first_name TEXT,
+            last_name TEXT,
+            birth_month INTEGER,
+            birth_day INTEGER,
+            birth_year INTEGER
+        );
+    """)
+    conn.commit()
+    conn.close()
+
+
 # support_agent_prompt = '''
 # Instructions:
 # You are a friendly and efficient customer support agent who assists users over the phone in filling out the following form: {form_title}. Your primary goal is to guide the caller through each field in the form, collecting accurate information while maintaining a natural, conversational tone.
@@ -362,31 +379,9 @@ class FormAgent(RoutedAgent):
             birth_day: Birth day
             birth_year: Birth year
         """
-        # print(f"verify_identity tool: first: {first_name}, last: {last_name}, date: {birth_month}/{birth_day}/{birth_year}")
+        print(f"verify_identity tool: first: {first_name}, last: {last_name}, date: {birth_month}/{birth_day}/{birth_year}")
 
-        conn = sqlite3.connect("users.db")
-        cursor = conn.cursor()
-        cursor.execute("""
-        SELECT 1 FROM users
-        WHERE LOWER(first_name) = ?
-          AND LOWER(last_name) = ?
-          AND birth_month = ?
-          AND birth_day = ?
-          AND birth_year = ?
-        LIMIT 1
-        """, (
-        first_name.lower().strip(),
-        last_name.lower().strip(),
-        birth_month,
-        birth_day,
-        birth_year
-        ))
-
-        match = cursor.fetchone()
-        conn.close()
-
-        # if "rafael" in first_name.lower() and "olmedo" in last_name.lower() and birth_day == 11 and birth_month == 11 and birth_year == 1995:
-        if match:
+        if "rafael" in first_name.lower() and "olmedo" in last_name.lower() and birth_day == 11 and birth_month == 11 and birth_year == 1995:
             self.identity_verified = True
             name_added_message = ""
 
