@@ -157,7 +157,7 @@ async def deepgram_stt(streamsid, twilio_ws, audio_queue):
         "&smart_format=true"
         "&model=nova-3"
         "&interim_results=true"
-        "&endpointing=1000"
+        "&endpointing=200"
         "&speech_final=true")
 
     headers = {"Authorization": f"Token {DEEPGRAM_API_KEY}"}
@@ -176,13 +176,15 @@ async def deepgram_stt(streamsid, twilio_ws, audio_queue):
                 msg = json.loads(message)
                 transcript = msg.get("channel", {}).get("alternatives", [{}])[0].get("transcript", "")
                 is_final = msg.get("is_final", False)
+                speech_final = msg.get("speech_final", False)
 
-                print(is_final)
+                print('is_final: ', is_final)
+                print('speech_final: ', speech_final)
 
                 if transcript:
                     print("You:", transcript)
                 
-                if is_final and transcript.strip():
+                if is_final and speech_final and transcript.strip():
                     user_input = transcript.strip().lower()
                     if "goodbye" in user_input or "exit" in user_input:
                         farewell = "Goodbye! Ending the call now."
@@ -192,7 +194,7 @@ async def deepgram_stt(streamsid, twilio_ws, audio_queue):
                         await twilio_ws.close()
                         break
 
-                if is_final and transcript.strip():
+                if is_final and speech_final and transcript.strip():
                     response_text = await get_chatgpt_response(transcript.strip())
                     print("ChatGPT:", response_text)
                     await send_tts_to_twilio(response_text, streamsid, twilio_ws)
