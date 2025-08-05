@@ -1,4 +1,4 @@
-# AI Voice Agent for IT Support
+# AI Voice Agent for IT Support (WIP)
 
 1. Clone the repository:
 
@@ -24,7 +24,9 @@
    - Deepgram ($200 usd)
    - Jotform (5 forms)
 
-(Optional) If you pay $20 on Twilio, you will have access to those credits + Twilio Dev Phone to run an application on your local system and make calls directly from your browser instead of using your mobile phone. This is very useful when testing the application.
+   (Optional) If you pay $20 on Twilio, you will have access to those credits + Twilio Dev Phone to run an application on your local system and make calls directly from your browser instead of using your mobile phone. This is very useful when testing the application. To use this feature, use the following documentation to install Twilio CLI and run Twilio Dev Phone: 
+
+   [Twilio Dev Phone](https://www.twilio.com/docs/labs/dev-phone)
 
 
 
