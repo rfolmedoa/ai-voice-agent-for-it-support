@@ -28,6 +28,6 @@
 
    [Twilio Dev Phone](https://www.twilio.com/docs/labs/dev-phone)
 
-5. Install ngrok on the machine where the server will be ran to expose it to the internet. 
+5. Install ngrok on the machine where the server will run to expose it to the Internet:
 
-   [Download Ngrok for Mac](https://ngrok.com/downloads/mac-os)
+   [Download ngrok for macOS](https://ngrok.com/downloads/mac-os)
