@@ -12,11 +12,19 @@
    conda env create -f environment.yml
    ```
 
-2. Create a .env file with the following API keys:
+3. Create a .env file with the following API keys:
 
    - DEEPGRAM_API_KEY
    - OPENAI_API_KEY
    - JOTFORM_API_KEY
 
+4. Create a free trial account for:
 
- 
+   - Twilio ($15 usd)
+   - Deepgram ($200 usd)
+   - Jotform (5 forms)
+
+(Optional) If you pay $20 on Twilio, you will have access to those credits + Twilio Dev Phone to run an application on your local system and make calls directly from your browser instead of using your mobile phone. This is very useful when testing the application.
+
+
+
