@@ -12,7 +12,7 @@
    conda env create -f environment.yml
    ```
 
-2. Create a .env file with all the keys: 
+2. Create a .env file with the following API keys:
 
    - DEEPGRAM_API_KEY
    - OPENAI_API_KEY
