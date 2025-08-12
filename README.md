@@ -43,3 +43,14 @@
    ```bash
    ngrok http 5000
    ```
+
+8. Create a [TwiML Bin](https://www.twilio.com/docs/serverless/twiml-bins) in Twilio using the following payload:
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <Response>
+      <Say language="en">"This call may be monitored or recorded."</Say>
+      <Connect>
+         <Stream url="wss://13903d8e34b3.ngrok-free.app/twilio" />
+      </Connect>
+   </Response>
