@@ -12,13 +12,7 @@
    conda env create -f environment.yml
    ```
 
-3. Create a .env file with the following API keys:
-
-   - DEEPGRAM_API_KEY
-   - OPENAI_API_KEY
-   - JOTFORM_API_KEY
-
-4. Create a free trial account for:
+3. Create a free trial account for:
 
    - Twilio ($15 in free credits)
    - Deepgram ($200 in free credits)
@@ -28,6 +22,24 @@
 
    [Twilio Dev Phone](https://www.twilio.com/docs/labs/dev-phone)
 
+3. Create a .env file with the following API keys:
+
+   - DEEPGRAM_API_KEY
+   - OPENAI_API_KEY
+   - JOTFORM_API_KEY
+
 5. Install ngrok on the machine where the server will run to expose it to the Internet:
 
    [Download ngrok for macOS](https://ngrok.com/downloads/mac-os)
+
+6. Run the main.py file (WebSocket server on port 5000):
+
+   ```bash
+   python main.py
+   ```
+
+7. Run ngrok:
+
+   ```bash
+   ngrok http 5000
+   ```
